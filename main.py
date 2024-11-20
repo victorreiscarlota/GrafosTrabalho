@@ -1,4 +1,5 @@
 import os
+import sys
 
 class Grafo:
     def __init__(self, num_vertices):
@@ -15,9 +16,87 @@ class Grafo:
         self.adjacencias[u] = [w for w in self.adjacencias[u] if w[0] != v]
         self.adjacencias[v] = [w for w in self.adjacencias[v] if w[0] != u]
 
+    def checar_adjacencia_vertices(self, u, v):
+        return any(w == v for w, _ in self.adjacencias[u])
+
     def contar_vertices_arestas(self):
         num_arestas = sum(len(self.adjacencias[v]) for v in self.adjacencias) // 2
         return self.num_vertices, num_arestas
+
+    def grafo_vazio(self):
+        return all(len(self.adjacencias[v]) == 0 for v in self.adjacencias)
+
+    def grafo_completo(self):
+        for u in range(self.num_vertices):
+            for v in range(self.num_vertices):
+                if u != v and not self.checar_adjacencia_vertices(u, v):
+                    return False
+        return True
+
+    def identificar_pontes_naive(self):
+        pontes = []
+        for u in range(self.num_vertices):
+            for v, _ in self.adjacencias[u]:
+                self.remover_aresta(u, v)
+                if not self.grafo_conectado():
+                    pontes.append((u, v))
+                self.adicionar_aresta(u, v)
+        return pontes
+
+    def identificar_pontes_tarjan(self):
+        TD = [0] * self.num_vertices
+        low = [float("inf")] * self.num_vertices
+        pai = [None] * self.num_vertices
+        pontes = []
+        self.tempo = 0
+
+        def dfs_tarjan(v):
+            TD[v] = low[v] = self.tempo = self.tempo + 1
+            for w, _ in self.adjacencias[v]:
+                if TD[w] == 0:
+                    pai[w] = v
+                    dfs_tarjan(w)
+                    low[v] = min(low[v], low[w])
+                    if low[w] > TD[v]:
+                        pontes.append((v, w))
+                elif w != pai[v]:
+                    low[v] = min(low[v], TD[w])
+
+        for v in range(self.num_vertices):
+            if TD[v] == 0:
+                dfs_tarjan(v)
+
+        return pontes
+
+    def grafo_conectado(self):
+        visitados = [False] * self.num_vertices
+
+        def dfs(v):
+            visitados[v] = True
+            for w, _ in self.adjacencias[v]:
+                if not visitados[w]:
+                    dfs(w)
+
+        dfs(0)
+        return all(visitados)
+
+    def fleury(self):
+        def eh_aresta_ponte(u, v):
+            self.remover_aresta(u, v)
+            conectado = self.grafo_conectado()
+            self.adicionar_aresta(u, v)
+            return not conectado
+
+        caminho = []
+        atual = 0
+        while any(self.adjacencias[atual]):
+            for vizinho, _ in self.adjacencias[atual]:
+                if not eh_aresta_ponte(atual, vizinho) or len(self.adjacencias[atual]) == 1:
+                    caminho.append((atual, vizinho))
+                    self.remover_aresta(atual, vizinho)
+                    atual = vizinho
+                    break
+        return caminho
 
     def exportar_para_gexf(self, nome_arquivo="grafo.gexf"):
         if not os.path.exists("dados"):
@@ -55,51 +134,38 @@ class Grafo:
                         arestas.add((u, v))
                         arquivo.write(f"{u},{v},{peso}\n")
 
-    def exportar_para_ppm(self, nome_arquivo="grafo.ppm"):
-        largura = 500
-        altura = 500
-        raio = 10
-        centro = largura // 2, altura // 2
-        espacamento = 360 // self.num_vertices
 
-        vertices_posicoes = {}
-        for i in range(self.num_vertices):
-            angulo = espacamento * i
-            x = int(centro[0] + (largura // 2.5) * (angulo / 360))
-            y = int(centro[1] + (altura // 2.5) * (angulo / 360))
-            vertices_posicoes[i] = (x, y)
+def ajustar_limite_recursao(tamanho_grafo):
+    limite = min(2000 + tamanho_grafo, 20000)  
+    sys.setrecursionlimit(limite)
 
-        imagem = [["255 255 255" for _ in range(largura)] for _ in range(altura)]
+def testeDesempenho():
+    tamanhos = [100, 1000, 10000, 100000]
+    num_arestas = [150, 1500, 15000, 150000]
 
-        for u, vizinhos in self.adjacencias.items():
-            x1, y1 = vertices_posicoes[u]
-            for v, _ in vizinhos:
-                x2, y2 = vertices_posicoes[v]
-                for t in range(101):
-                    x = int(x1 + (x2 - x1) * t / 100)
-                    y = int(y1 + (y2 - y1) * t / 100)
-                    imagem[y][x] = "0 0 0"
+    for tamanho, arestas in zip(tamanhos, num_arestas):
+        ajustar_limite_recursao(tamanho)  
 
-        for x, y in vertices_posicoes.values():
-            for i in range(-raio, raio + 1):
-                for j in range(-raio, raio + 1):
-                    if 0 <= x + i < largura and 0 <= y + j < altura:
-                        imagem[y + j][x + i] = "255 0 0"
-
-        if not os.path.exists("dados"):
-            os.makedirs("dados")
-        with open(f"dados/{nome_arquivo}", "w") as arquivo:
-            arquivo.write(f"P3\n{largura} {altura}\n255\n")
-            for linha in imagem:
-                arquivo.write(" ".join(linha) + "\n")
+        grafo = Grafo(tamanho)
+        for i in range(arestas):
+            grafo.adicionar_aresta(i % tamanho, (i + 1) % tamanho)
+        print(f"Teste para {tamanho} vértices:")
+        print("Método Naive:")
+        pontes_naive = grafo.identificar_pontes_naive()
+        print(f"Pontes encontradas: {len(pontes_naive)}")
+        print("Método Tarjan:")
+        pontes_tarjan = grafo.identificar_pontes_tarjan()
+        print(f"Pontes encontradas: {len(pontes_tarjan)}")
+        caminho_euleriano = grafo.fleury()
+        print(f"Caminho Euleriano: {caminho_euleriano}")
+        grafo.exportar_para_gexf(f"grafo_{tamanho}.gexf")
+        grafo.exportar_para_csv(f"grafo_{tamanho}.csv")
 
 def menu():
     grafos_prontos = {
-        "1": [(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)],  
-        "2": [(0, 1), (1, 2), (2, 3), (3, 4)],          
-        "3": [(0, 1), (0, 2), (0, 3), (0, 4)],         
-        "4": [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (2, 5), (1, 4), (0, 3)],  # Complexo
-        "5": [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5), (1, 3), (2, 4), (0, 2), (3, 5)],  # Denso
+        "1": [(0, 1), (1, 2), (2, 3), (3, 0)],
+        "2": [(0, 1), (1, 2), (2, 3), (3, 0), (3, 1)],
+        "3": [(0, 1), (1, 2), (2, 3), (3, 0), (3, 2), (2, 0)],
     }
 
     while True:
@@ -116,39 +182,47 @@ def menu():
                 grafo = Grafo(num_vertices)
                 for u, v in arestas:
                     grafo.adicionar_aresta(u, v)
+                print(f"Grafo {nome}:")
+                print(f"Vértices: {grafo.num_vertices}")
+                print(f"Arestas: {grafo.contar_vertices_arestas()[1]}")
                 grafo.exportar_para_gexf(f"grafo_{nome}.gexf")
                 grafo.exportar_para_csv(f"grafo_{nome}.csv")
-                grafo.exportar_para_ppm(f"grafo_{nome}.ppm")
-                print(f"Grafo {nome} salvo nos formatos GEXF, CSV e PPM.")
         elif opcao == 2:
             num_vertices = int(input("Digite o número de vértices: "))
             grafo = Grafo(num_vertices)
             while True:
                 print("1. Adicionar Aresta")
                 print("2. Remover Aresta")
-                print("3. Mostrar Informações")
-                print("4. Salvar Grafo")
-                print("5. Voltar")
-                sub_opcao = int(input("Escolha: "))
-                if sub_opcao == 1:
-                    u, v = map(int, input("Digite os vértices da aresta (u v): ").split())
+                print("3. Verificar Adjacência")
+                print("4. Voltar")
+                escolha = int(input("Escolha uma opção: "))
+                if escolha == 1:
+                    u = int(input("Digite o vértice u: "))
+                    v = int(input("Digite o vértice v: "))
                     grafo.adicionar_aresta(u, v)
-                elif sub_opcao == 2:
-                    u, v = map(int, input("Digite os vértices da aresta para remover (u v): ").split())
+                    print(f"Aresta ({u}, {v}) adicionada!")
+                elif escolha == 2:
+                    u = int(input("Digite o vértice u: "))
+                    v = int(input("Digite o vértice v: "))
                     grafo.remover_aresta(u, v)
-                elif sub_opcao == 3:
-                    print(f"Vértices: {grafo.num_vertices}")
-                    print(f"Arestas: {grafo.contar_vertices_arestas()[1]}")
-                elif sub_opcao == 4:
-                    grafo.exportar_para_gexf("grafo_manual.gexf")
-                    grafo.exportar_para_csv("grafo_manual.csv")
-                    grafo.exportar_para_ppm("grafo_manual.ppm")
-                    print("Grafo salvo.")
-                elif sub_opcao == 5:
+                    print(f"Aresta ({u}, {v}) removida!")
+                elif escolha == 3:
+                    u = int(input("Digite o vértice u: "))
+                    v = int(input("Digite o vértice v: "))
+                    if grafo.checar_adjacencia_vertices(u, v):
+                        print(f"Aresta ({u}, {v}) existe!")
+                    else:
+                        print(f"Aresta ({u}, {v}) não existe.")
+                elif escolha == 4:
+                    grafo.exportar_para_gexf(f"grafo_{num_vertices}.gexf")
+                    grafo.exportar_para_csv(f"grafo_{num_vertices}.csv")
                     break
         elif opcao == 3:
-            print("Teste de desempenho não implementado aqui.")
+            testeDesempenho()
         elif opcao == 4:
             break
+        else:
+            print("Opção inválida, tente novamente.")
+
 
 menu()
