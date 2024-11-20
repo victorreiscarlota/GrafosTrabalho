@@ -62,9 +62,9 @@ class Grafo:
                 self.adicionar_aresta(u, v)
         return pontes
 
-    def identificar_pontes_tarjan(self):
+    def identificar_pontes_tarjan_iterativo(self):
         """
-        Identifica pontes usando o algoritmo de Tarjan.
+        Identifica pontes usando o algoritmo de Tarjan (versão iterativa).
         """
         TD = [0] * self.num_vertices
         low = [float("inf")] * self.num_vertices
@@ -72,24 +72,33 @@ class Grafo:
         pontes = []
         self.tempo = 0
 
-        def busca_pontes(v):
-            self.tempo += 1
-            TD[v] = low[v] = self.tempo
-            for w, _ in self.adjacencias[v]:
-                if TD[w] == 0:
-                    pai[w] = v
-                    busca_pontes(w)
-                    low[v] = min(low[v], low[w])
-                    if low[w] > TD[v]:
-                        pontes.append((v, w))
-                elif w != pai[v]:
-                    low[v] = min(low[v], TD[w])
-
         for v in range(self.num_vertices):
             if TD[v] == 0:
-                busca_pontes(v)
+                
+                stack = [(v, -1, "discover")]
+
+                while stack:
+                    atual, parent, action = stack.pop()
+
+                    if action == "discover":
+                        self.tempo += 1
+                        TD[atual] = low[atual] = self.tempo
+                        for w, _ in self.adjacencias[atual]:
+                            if TD[w] == 0:  # Descobrir novo vértice
+                                stack.append((atual, parent, "process"))
+                                stack.append((w, atual, "discover"))
+                            elif w != parent:  # Back edge
+                                low[atual] = min(low[atual], TD[w])
+
+                    elif action == "process":
+                        for w, _ in self.adjacencias[atual]:
+                            if w != parent:
+                                low[atual] = min(low[atual], low[w])
+                                if low[w] > TD[atual]:
+                                    pontes.append((atual, w))
 
         return pontes
+
 
     def fleury(self):
         """
@@ -217,7 +226,6 @@ def teste_desempenho():
         grafo = Grafo(tamanho)
         grafo.gerar_grafo_simples(num_arestas[i])
 
-        
         print(f"Teste para {tamanho} vértices usando método Naive:")
         operacoes_naive = 0
         for u in range(grafo.num_vertices):
@@ -225,14 +233,14 @@ def teste_desempenho():
                 operacoes_naive += 1  
         print(f"Operações simuladas: {operacoes_naive}")
 
-        
         print(f"Teste para {tamanho} vértices usando método Tarjan:")
         grafo.tempo = 0
-        pontes_tarjan = grafo.identificar_pontes_tarjan()
+        pontes_tarjan = grafo.identificar_pontes_tarjan_iterativo()  # Nome correto do método
         print(f"Pontes encontradas: {len(pontes_tarjan)}")
         print(f"Operações simuladas: {grafo.tempo}")
 
         print()
+
 
 
 teste_desempenho()
