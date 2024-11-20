@@ -129,6 +129,83 @@ class Grafo:
                     break
 
         return caminho
+    
+    def exportar_para_gexf(self, nome_arquivo="grafo.gexf"):
+        """
+        Exporta o grafo para o formato GEXF, compatível com Gephi.
+        """
+        with open(nome_arquivo, "w", encoding="utf-8") as arquivo:
+            arquivo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            arquivo.write('<gexf xmlns="http://www.gexf.net/1.3" version="1.3">\n')
+            arquivo.write("  <graph mode=\"static\" defaultedgetype=\"undirected\">\n")
+            arquivo.write("    <nodes>\n")
+            for vertice in range(self.num_vertices):
+                arquivo.write(f'      <node id="{vertice}" label="V{vertice}" />\n')
+            arquivo.write("    </nodes>\n")
+            arquivo.write("    <edges>\n")
+            id_aresta = 0
+            arestas = set()
+            for u in range(self.num_vertices):
+                for v, peso in self.adjacencias[u]:
+                    if (u, v) not in arestas and (v, u) not in arestas:
+                        arestas.add((u, v))
+                        arquivo.write(f'      <edge id="{id_aresta}" source="{u}" target="{v}" weight="{peso}" />\n')
+                        id_aresta += 1
+            arquivo.write("    </edges>\n")
+            
+            arquivo.write("  </graph>\n")
+            arquivo.write("</gexf>\n")
+        print(f"Grafo exportado para {nome_arquivo}")
+
+    def ler_de_gexf(self, nome_arquivo="grafo.gexf"):
+        """
+        Lê um grafo de um arquivo no formato GEXF.
+        """
+        try:
+            with open(nome_arquivo, "r", encoding="utf-8") as arquivo:
+                linhas = arquivo.readlines()
+                lendo_nos = False
+                lendo_arestas = False
+
+                for linha in linhas:
+                    linha = linha.strip()
+
+                    if "<nodes>" in linha:
+                        lendo_nos = True
+                        continue
+                    if "</nodes>" in linha:
+                        lendo_nos = False
+                        continue
+                    if "<edges>" in linha:
+                        lendo_arestas = True
+                        continue
+                    if "</edges>" in linha:
+                        lendo_arestas = False
+                        continue
+
+                    if lendo_nos and "<node" in linha:
+                        pass
+                    elif lendo_arestas and "<edge" in linha:
+                        source = int(linha.split('source="')[1].split('"')[0])
+                        target = int(linha.split('target="')[1].split('"')[0])
+                        self.adicionar_aresta(source, target)
+            print(f"Grafo lido do arquivo {nome_arquivo}")
+        except FileNotFoundError:
+            print(f"Erro: Arquivo {nome_arquivo} não encontrado.")
+
+    def exportar_para_csv(self, nome_arquivo="grafo.csv"):
+        """
+        Exporta o grafo para o formato CSV.
+        """
+        with open(nome_arquivo, "w", encoding="utf-8") as arquivo:
+            arquivo.write("Source,Target,Weight\n")
+            arestas = set()
+            for u in range(self.num_vertices):
+                for v, peso in self.adjacencias[u]:
+                    if (u, v) not in arestas and (v, u) not in arestas:
+                        arestas.add((u, v))
+                        arquivo.write(f"{u},{v},{peso}\n")
+        print(f"Grafo exportado para {nome_arquivo}")
 
 
 
