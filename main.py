@@ -223,63 +223,6 @@ class Grafo:
             arquivo.write("  </graph>\n")
             arquivo.write("</gexf>\n")
 
-    def exportar_para_csv(self, nome_arquivo="grafo.csv"):
-        if not os.path.exists("dados"):
-            os.makedirs("dados")
-        with open(os.path.join("dados", nome_arquivo), "w", encoding="utf-8") as arquivo:
-            arquivo.write("Source,Target,Weight,Label\n")
-            for edge in self.edge_list:
-                u = edge['u']
-                v = edge['v']
-                peso = edge['peso']
-                label = edge['label'] if edge['label'] else ""
-                arquivo.write(f"{u},{v},{peso},{label}\n")
-
-    def exportar_para_graphml(self, nome_arquivo="grafo.graphml"):
-        if not os.path.exists("dados"):
-            os.makedirs("dados")
-        with open(os.path.join("dados", nome_arquivo), "w", encoding="utf-8") as arquivo:
-            arquivo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            arquivo.write('<graphml xmlns="http://graphml.graphdrawing.org/xmlns">\n')
-            arquivo.write('  <graph id="G" edgedefault="{}">\n'.format("directed" if self.dirigido else "undirected"))
-            for vertice in range(self.num_vertices):
-                label = self.vertex_labels.get(vertice, f"V{vertice}")
-                arquivo.write(f'    <node id="{vertice}">\n')
-                arquivo.write(f'      <data key="label">{label}</data>\n')
-                arquivo.write('    </node>\n')
-            for edge in self.edge_list:
-                u = edge['u']
-                v = edge['v']
-                label = edge['label'] if edge['label'] else ""
-                arquivo.write(f'    <edge source="{u}" target="{v}">\n')
-                arquivo.write(f'      <data key="label">{label}</data>\n')
-                arquivo.write('    </edge>\n')
-            arquivo.write('  </graph>\n')
-            arquivo.write('</graphml>\n')
-
-    def exportar_para_gml(self, nome_arquivo="grafo.gml"):
-        if not os.path.exists("dados"):
-            os.makedirs("dados")
-        with open(os.path.join("dados", nome_arquivo), "w", encoding="utf-8") as arquivo:
-            arquivo.write("graph [\n")
-            arquivo.write(f'  directed {1 if self.dirigido else 0}\n')
-            for vertice in range(self.num_vertices):
-                label = self.vertex_labels.get(vertice, f"V{vertice}")
-                arquivo.write("  node [\n")
-                arquivo.write(f'    id {vertice}\n')
-                arquivo.write(f'    label "{label}"\n')
-                arquivo.write("  ]\n")
-            for edge in self.edge_list:
-                u = edge['u']
-                v = edge['v']
-                label = edge['label'] if edge['label'] else ""
-                arquivo.write("  edge [\n")
-                arquivo.write(f'    source {u}\n')
-                arquivo.write(f'    target {v}\n')
-                arquivo.write(f'    label "{label}"\n')
-                arquivo.write("  ]\n")
-            arquivo.write("]\n")
-
     def exportar_para_ppm(self, nome_arquivo="grafo.ppm"):
         largura = 800
         altura = 800
@@ -471,9 +414,6 @@ def menu():
                 else:
                     print("Conectado:", grafo.grafo_conectado())
                 grafo.exportar_para_gexf(f"grafo_{nome}.gexf")
-                grafo.exportar_para_csv(f"grafo_{nome}.csv")
-                grafo.exportar_para_graphml(f"grafo_{nome}.graphml")
-                grafo.exportar_para_gml(f"grafo_{nome}.gml")
                 grafo.exportar_para_ppm(f"grafo_{nome}.ppm")
         elif opcao == 2:
             try:
@@ -549,9 +489,7 @@ def menu():
                 elif escolha == 9:
                     nome = input("Digite o nome base dos arquivos (sem extensão): ")
                     grafo.exportar_para_gexf(f"{nome}.gexf")
-                    grafo.exportar_para_csv(f"{nome}.csv")
-                    grafo.exportar_para_graphml(f"{nome}.graphml")
-                    grafo.exportar_para_gml(f"{nome}.gml")
+                    grafo.exportar_para_ppm(f"{nome}.ppm")
                     print("Exportação concluída.")
                 elif escolha == 10:
                     nome_ppm = input("Digite o nome do arquivo PPM (com extensão .ppm): ")
