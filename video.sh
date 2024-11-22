@@ -19,7 +19,6 @@ fi
 
 OUTPUT_GIF="dados/animacao.gif"
 
-# Usa o FFmpeg para criar o GIF
 ffmpeg -framerate 1 -i $FRAMES_DIR/frame_%d.ppm -vf "scale=800:-1:flags=lanczos" -loop 0 "$OUTPUT_GIF"
 
 if [ -f "$OUTPUT_GIF" ]; then
