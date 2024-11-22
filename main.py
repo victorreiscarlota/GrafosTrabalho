@@ -52,18 +52,16 @@ class MatrizIncidencia:
     def __init__(self, num_vertices, dirigido=False):
         self.num_vertices = num_vertices
         self.dirigido = dirigido
-        self.inc_matrix = []  # Cada linha representa uma aresta
-        self.edge_list = []   # Lista de arestas com informações adicionais
-
+        self.inc_matrix = []  
+        self.edge_list = []   
     def adicionar_aresta(self, u, v, peso=1, label=None):
         self.edge_list.append({'u': u, 'v': v, 'peso': peso, 'label': label})
         edge_index = len(self.edge_list) - 1
 
-        # Adicionar nova coluna a todas as linhas existentes
+        
         for row in self.inc_matrix:
             row.append(0)
-
-        # Adicionar nova linha para a nova aresta
+        
         nova_coluna = [0] * self.num_vertices
         nova_coluna[u] = 1
         if not self.dirigido:
@@ -77,7 +75,6 @@ class MatrizIncidencia:
             if edge['u'] == u and edge['v'] == v:
                 del self.edge_list[i]
                 del self.inc_matrix[i]
-                # Remover a coluna correspondente de todas as linhas
                 for row in self.inc_matrix:
                     del row[i]
                 break
@@ -102,7 +99,7 @@ class Grafo:
         self.lista_adj = ListaAdjacencia(num_vertices, dirigido)
         self.matriz_adj = MatrizAdjacencia(num_vertices, dirigido)
         self.matriz_inc = MatrizIncidencia(num_vertices, dirigido)
-        self.edge_list = []  # Lista de arestas com informações adicionais
+        self.edge_list = []
         self.vertex_labels = {i: f"V{i}" for i in range(num_vertices)}
         self.tempo = 0
         self.frame_count = 0
@@ -113,36 +110,28 @@ class Grafo:
         self.matriz_adj.num_vertices += 1
         self.matriz_inc.num_vertices += 1
         self.num_vertices += 1
-
-        # Atualizar Lista de Adjacência
         self.lista_adj.adjacencias[v] = []
-
-        # Atualizar Matriz de Adjacência
+        
         for row in self.matriz_adj.adj_matrix:
             row.append(0)
         self.matriz_adj.adj_matrix.append([0] * self.matriz_adj.num_vertices)
-
-        # Atualizar Matriz de Incidência
+        
         for row in self.matriz_inc.inc_matrix:
             row.append(0)
-
-        # Atualizar labels
+        
         self.vertex_labels[v] = label if label else f"V{v}"
 
     def adicionar_aresta(self, u, v, peso=1, label=None):
-        # Adicionar aresta nas representações
         self.lista_adj.adicionar_aresta(u, v, peso, label)
         self.matriz_adj.adicionar_aresta(u, v, peso)
         self.matriz_inc.adicionar_aresta(u, v, peso, label)
         self.edge_list.append({'u': u, 'v': v, 'peso': peso, 'label': label})
 
     def remover_aresta(self, u, v):
-        # Remover aresta das representações
         self.lista_adj.remover_aresta(u, v)
         self.matriz_adj.remover_aresta(u, v)
         self.matriz_inc.remover_aresta(u, v)
-
-        # Remover da edge_list
+        
         for i, edge in enumerate(self.edge_list):
             if edge['u'] == u and edge['v'] == v:
                 del self.edge_list[i]
@@ -169,7 +158,6 @@ class Grafo:
         for u in range(self.num_vertices):
             grau = len(self.lista_adj.adjacencias[u])
             if self.dirigido:
-                # Para grafos dirigidos, cada vértice deve ter n-1 saídas
                 if grau != self.num_vertices - 1:
                     return False
             else:
@@ -375,7 +363,6 @@ class Grafo:
             print("O grafo não é Euleriano.")
             return []
         grafo_copia = Grafo(self.num_vertices, self.dirigido)
-        # Copiar arestas
         grafo_copia.lista_adj.adjacencias = {v: list(self.lista_adj.adjacencias[v]) for v in self.lista_adj.adjacencias}
         grafo_copia.matriz_adj.adj_matrix = [row.copy() for row in self.matriz_adj.adj_matrix]
         grafo_copia.matriz_inc.inc_matrix = [row.copy() for row in self.matriz_inc.inc_matrix]
