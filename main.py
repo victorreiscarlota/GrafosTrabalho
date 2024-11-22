@@ -338,7 +338,7 @@ class Grafo:
                     f.write(f"{pixel[0]} {pixel[1]} {pixel[2]} ")
                 f.write("\n")
 
-def testeDesempenho():
+def teste_desempenho():
     tamanhos = [100, 1000, 10000]
     for tamanho in tamanhos:
         num_arestas = tamanho * 2
@@ -499,7 +499,7 @@ def menu():
                 else:
                     print("Opção inválida, tente novamente.")
         elif opcao == 3:
-            testeDesempenho()
+            teste_desempenho()
         elif opcao == 4:
             break
         else:
