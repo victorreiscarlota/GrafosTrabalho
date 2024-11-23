@@ -54,11 +54,11 @@ class MatrizIncidencia:
         self.dirigido = dirigido
         self.inc_matrix = []  
         self.edge_list = []   
+
     def adicionar_aresta(self, u, v, peso=1, label=None):
         self.edge_list.append({'u': u, 'v': v, 'peso': peso, 'label': label})
         edge_index = len(self.edge_list) - 1
 
-        
         for row in self.inc_matrix:
             row.append(0)
         
@@ -93,14 +93,15 @@ class MatrizIncidencia:
             print(row)
 
 class Grafo:
-    def __init__(self, num_vertices, dirigido=False):
+    def __init__(self, num_vertices, dirigido=False, nome=""):
         self.num_vertices = num_vertices
         self.dirigido = dirigido
+        self.nome = nome  # Adicionado para armazenar o nome do grafo
         self.lista_adj = ListaAdjacencia(num_vertices, dirigido)
         self.matriz_adj = MatrizAdjacencia(num_vertices, dirigido)
         self.matriz_inc = MatrizIncidencia(num_vertices, dirigido)
         self.edge_list = []
-        self.vertex_labels = {i: f"V{i}" for i in range(num_vertices)}
+        self.vertex_labels = {i: f"V{i + 1}" for i in range(num_vertices)}
         self.tempo = 0
         self.frame_count = 0
 
@@ -119,7 +120,7 @@ class Grafo:
         for row in self.matriz_inc.inc_matrix:
             row.append(0)
         
-        self.vertex_labels[v] = label if label else f"V{v}"
+        self.vertex_labels[v] = label if label else f"V{v + 1}"
 
     def adicionar_aresta(self, u, v, peso=1, label=None):
         self.lista_adj.adicionar_aresta(u, v, peso, label)
@@ -141,7 +142,6 @@ class Grafo:
                 break
 
     def checar_adjacencia_vertices(self, u, v):
-        # Verifica em todas as representações
         return (self.lista_adj.checar_adjacencia(u, v) and
                 self.matriz_adj.checar_adjacencia(u, v) and
                 self.matriz_inc.checar_adjacencia(u, v))
@@ -362,7 +362,7 @@ class Grafo:
         if not self.grafo_euleriano():
             print("O grafo não é Euleriano.")
             return []
-        grafo_copia = Grafo(self.num_vertices, self.dirigido)
+        grafo_copia = Grafo(self.num_vertices, self.dirigido, self.nome)
         grafo_copia.lista_adj.adjacencias = {v: list(self.lista_adj.adjacencias[v]) for v in self.lista_adj.adjacencias}
         grafo_copia.matriz_adj.adj_matrix = [row.copy() for row in self.matriz_adj.adj_matrix]
         grafo_copia.matriz_inc.inc_matrix = [row.copy() for row in self.matriz_inc.inc_matrix]
@@ -391,15 +391,16 @@ class Grafo:
         return all(g % 2 == 0 for g in graus)
 
     def exportar_para_gexf(self, nome_arquivo="grafo.gexf"):
-        if not os.path.exists("dados"):
-            os.makedirs("dados")
-        with open(os.path.join("dados", nome_arquivo), "w", encoding="utf-8") as arquivo:
+        dados_dir = "dados"
+        if not os.path.exists(dados_dir):
+            os.makedirs(dados_dir)
+        with open(os.path.join(dados_dir, nome_arquivo), "w", encoding="utf-8") as arquivo:
             arquivo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             arquivo.write('<gexf xmlns="http://www.gexf.net/1.3draft" version="1.3">\n')
             arquivo.write('  <graph mode="static" defaultedgetype="{}">\n'.format("directed" if self.dirigido else "undirected"))
             arquivo.write("    <nodes>\n")
             for vertice in range(self.num_vertices):
-                label = self.vertex_labels.get(vertice, f"V{vertice}")
+                label = self.vertex_labels.get(vertice, f"V{vertice + 1}")
                 arquivo.write(f'      <node id="{vertice}" label="{label}" />\n')
             arquivo.write("    </nodes>\n")
             arquivo.write("    <edges>\n")
@@ -414,6 +415,10 @@ class Grafo:
             arquivo.write("</gexf>\n")
 
     def exportar_para_ppm(self, nome_arquivo="grafo.ppm"):
+        dados_dir = "dados"
+        if not os.path.exists(dados_dir):
+            os.makedirs(dados_dir)
+        
         largura = 800
         altura = 800
         raio_vertice = 20
@@ -432,7 +437,7 @@ class Grafo:
                     posicoes[idx] = (x, y)
                     idx += 1
 
-        caminho_frames = os.path.join("dados", "imagens_ppm")
+        caminho_frames = os.path.join(dados_dir, "imagens_ppm")
         if not os.path.exists(caminho_frames):
             os.makedirs(caminho_frames)
 
@@ -460,10 +465,41 @@ class Grafo:
             x1, y1 = posicoes[u]
             x2, y2 = posicoes[v]
             self.desenhar_linha(imagem_final, x1, y1, x2, y2, (0, 0, 0))
-        if not os.path.exists("dados"):
-            os.makedirs("dados")
-        self.salvar_imagem_ppm(imagem_final, os.path.join("dados", nome_arquivo))
-        print(f"Imagem PPM exportada como dados/{nome_arquivo}")
+        self.salvar_imagem_ppm(imagem_final, os.path.join(dados_dir, nome_arquivo))
+        print(f"Imagem PPM exportada como {os.path.join(dados_dir, nome_arquivo)}")
+
+    def exportar_para_txt(self, nome_arquivo="grafo.txt"):
+        dados_dir = "dados"
+        if not os.path.exists(dados_dir):
+            os.makedirs(dados_dir)
+        with open(os.path.join(dados_dir, nome_arquivo), 'w', encoding='utf-8') as f:
+            f.write(f"Grafo: {self.nome}\n")
+            f.write(f"Direcionado: {'Sim' if self.dirigido else 'Não'}\n")
+            f.write(f"Vértices: {self.num_vertices}\n")
+            f.write(f"Arestas: {len(self.edge_list)}\n\n")
+
+            f.write("Lista de Adjacência:\n")
+            for vertice, adj in self.lista_adj.adjacencias.items():
+                vertice_exibicao = vertice + 1
+                adj_exibicao = ", ".join([f"{v + 1}({peso})" for v, peso in adj])
+                f.write(f"{vertice_exibicao}: {adj_exibicao}\n")
+
+            f.write("\nMatriz de Adjacência:\n")
+            header = "   " + " ".join([f"{i+1:3}" for i in range(self.num_vertices)])
+            f.write(header + "\n")
+            for i, row in enumerate(self.matriz_adj.adj_matrix):
+                linha = f"{i+1:3} " + " ".join([f"{val:3}" for val in row])
+                f.write(linha + "\n")
+
+            f.write("\nMatriz de Incidência:\n")
+            if self.edge_list:
+                header = "   " + " ".join([f"{i+1:3}" for i in range(len(self.edge_list))])
+                f.write(header + "\n")
+                for i, row in enumerate(self.matriz_inc.inc_matrix):
+                    linha = f"{i+1:3} " + " ".join([f"{val:3}" for val in row])
+                    f.write(linha + "\n")
+            else:
+                f.write("Sem arestas.\n")
 
     def desenhar_linha(self, imagem, x1, y1, x2, y2, cor):
         x1 = int(x1)
@@ -525,15 +561,26 @@ class Grafo:
 
     def exibir_lista_adjacencia(self):
         print("Lista de Adjacência:")
-        self.lista_adj.exibir()
+        for vertice, adj in self.lista_adj.adjacencias.items():
+            vertice_exibicao = vertice + 1
+            adj_exibicao = [(v + 1, peso) for v, peso in adj]
+            print(f"{vertice_exibicao}: {adj_exibicao}")
 
     def exibir_matriz_adjacencia(self):
         print("Matriz de Adjacência:")
-        self.matriz_adj.exibir()
+        header = "   " + " ".join([f"{i+1:3}" for i in range(self.num_vertices)])
+        print(header)
+        for i, row in enumerate(self.matriz_adj.adj_matrix):
+            linha = f"{i+1:3} " + " ".join([f"{val:3}" for val in row])
+            print(linha)
 
     def exibir_matriz_incidencia(self):
         print("Matriz de Incidência:")
-        self.matriz_inc.exibir()
+        header = "   " + " ".join([f"{i+1:3}" for i in range(len(self.edge_list))])
+        print(header)
+        for i, row in enumerate(self.matriz_inc.inc_matrix):
+            linha = f"{i+1:3} " + " ".join([f"{val:3}" for val in row])
+            print(linha)
 
     def exibir_representacoes(self):
         self.exibir_lista_adjacencia()
@@ -622,32 +669,44 @@ def menu():
                 arestas = info['arestas']
                 dirigido = info['dirigido']
                 num_vertices = max(max(u, v) for u, v in arestas) + 1
-                grafo = Grafo(num_vertices, dirigido)
+                grafo_nome = f"Grafo_{nome}"
+                grafo = Grafo(num_vertices, dirigido, nome=grafo_nome)
                 for u, v in arestas:
                     grafo.adicionar_aresta(u, v)
-                print(f"\nGrafo {nome}:")
+                print(f"\n{grafo.nome}:")
                 print(f"O grafo é {'direcionado' if grafo.dirigido else 'não direcionado'}.")
                 print(f"Vértices: {grafo.num_vertices}")
                 print(f"Arestas: {grafo.contar_vertices_arestas()[1]}")
-                print("Pontes (Naive):", grafo.identificar_pontes_naive())
-                print("Pontes (Tarjan):", grafo.identificar_pontes_tarjan())
-                print("Articulações:", grafo.identificar_articulacoes())
+                pontes_naive = grafo.identificar_pontes_naive()
+                pontes_tarjan = grafo.identificar_pontes_tarjan()
+                print("Pontes (Naive):", [(u + 1, v + 1) for u, v in pontes_naive])
+                print("Pontes (Tarjan):", [(u + 1, v + 1) for u, v in pontes_tarjan])
+                articulacoes = grafo.identificar_articulacoes()
+                print("Articulações:", [v + 1 for v in articulacoes])
                 if dirigido:
                     print("Fortemente Conexo:", grafo.grafo_fortemente_conexo())
                     print("Conexo Fraco:", grafo.grafo_conexo_fraco())
                     print("Semi-fortemente Conexo:", grafo.grafo_semi_fortemente_conexo())
                 else:
                     print("Conexo:", grafo.grafo_conexo())
-                grafo.exportar_para_gexf(f"grafo_{nome}.gexf")
-                grafo.exportar_para_ppm(f"grafo_{nome}.ppm")
+                grafo.exportar_para_gexf(f"{grafo.nome}.gexf")
+                grafo.exportar_para_ppm(f"{grafo.nome}.ppm")
+                grafo.exportar_para_txt(f"{grafo.nome}.txt")
+                print(f"Grafo '{grafo.nome}' exportado para os formatos GEXF, PPM e TXT no diretório 'dados'.")
         elif opcao == 2:
             try:
                 num_vertices = int(input("Digite o número de vértices: "))
+                if num_vertices <= 0:
+                    print("O número de vértices deve ser positivo.")
+                    continue
                 dirigido = input("O grafo é direcionado? (s/n): ").lower() == 's'
+                nome_grafo = input("Digite o nome do grafo: ").strip()
+                if not nome_grafo:
+                    nome_grafo = "Grafo_Manual"
             except ValueError:
                 print("Entrada inválida. Por favor, digite um número inteiro.")
                 continue
-            grafo = Grafo(num_vertices, dirigido)
+            grafo = Grafo(num_vertices, dirigido, nome=nome_grafo)
             while True:
                 print("\n1. Adicionar Aresta")
                 print("2. Remover Aresta")
@@ -668,31 +727,40 @@ def menu():
                     continue
                 if escolha == 1:
                     try:
-                        u = int(input("Digite o vértice u: "))
-                        v = int(input("Digite o vértice v: "))
+                        u = int(input(f"Digite o vértice u (1 a {grafo.num_vertices}): ")) - 1
+                        v = int(input(f"Digite o vértice v (1 a {grafo.num_vertices}): ")) - 1
+                        if u < 0 or u >= grafo.num_vertices or v < 0 or v >= grafo.num_vertices:
+                            print(f"Erro: Vértices válidos estão entre 1 e {grafo.num_vertices}.")
+                            continue
                         peso_input = input("Digite o peso da aresta (padrão 1): ")
                         peso = int(peso_input) if peso_input else 1
                         label = input("Digite o rótulo da aresta (opcional): ")
                         grafo.adicionar_aresta(u, v, peso, label)
-                        print(f"Aresta ({u}, {v}) adicionada!")
+                        print(f"Aresta ({u + 1}, {v + 1}) adicionada!")
                     except ValueError:
                         print("Entrada inválida. Por favor, digite números inteiros.")
                 elif escolha == 2:
                     try:
-                        u = int(input("Digite o vértice u: "))
-                        v = int(input("Digite o vértice v: "))
+                        u = int(input(f"Digite o vértice u (1 a {grafo.num_vertices}): ")) - 1
+                        v = int(input(f"Digite o vértice v (1 a {grafo.num_vertices}): ")) - 1
+                        if u < 0 or u >= grafo.num_vertices or v < 0 or v >= grafo.num_vertices:
+                            print(f"Erro: Vértices válidos estão entre 1 e {grafo.num_vertices}.")
+                            continue
                         grafo.remover_aresta(u, v)
-                        print(f"Aresta ({u}, {v}) removida!")
+                        print(f"Aresta ({u + 1}, {v + 1}) removida!")
                     except ValueError:
                         print("Entrada inválida. Por favor, digite números inteiros.")
                 elif escolha == 3:
                     try:
-                        u = int(input("Digite o vértice u: "))
-                        v = int(input("Digite o vértice v: "))
+                        u = int(input(f"Digite o vértice u (1 a {grafo.num_vertices}): ")) - 1
+                        v = int(input(f"Digite o vértice v (1 a {grafo.num_vertices}): ")) - 1
+                        if u < 0 or u >= grafo.num_vertices or v < 0 or v >= grafo.num_vertices:
+                            print(f"Erro: Vértices válidos estão entre 1 e {grafo.num_vertices}.")
+                            continue
                         if grafo.checar_adjacencia_vertices(u, v):
-                            print(f"Aresta ({u}, {v}) existe!")
+                            print(f"Aresta ({u + 1}, {v + 1}) existe!")
                         else:
-                            print(f"Aresta ({u}, {v}) não existe.")
+                            print(f"Aresta ({u + 1}, {v + 1}) não existe.")
                     except ValueError:
                         print("Entrada inválida. Por favor, digite números inteiros.")
                 elif escolha == 4:
@@ -709,25 +777,43 @@ def menu():
                     else:
                         print("Conexo:", grafo.grafo_conexo())
                 elif escolha == 8:
-                    print("Pontes (Naive):", grafo.identificar_pontes_naive())
-                    print("Pontes (Tarjan):", grafo.identificar_pontes_tarjan())
+                    pontes_naive = grafo.identificar_pontes_naive()
+                    pontes_tarjan = grafo.identificar_pontes_tarjan()
+                    pontes_naive_exib = [(u + 1, v + 1) for u, v in pontes_naive]
+                    pontes_tarjan_exib = [(u + 1, v + 1) for u, v in pontes_tarjan]
+                    print("Pontes (Naive):", pontes_naive_exib)
+                    print("Pontes (Tarjan):", pontes_tarjan_exib)
                 elif escolha == 9:
-                    print("Articulações:", grafo.identificar_articulacoes())
+                    articulacoes = [v + 1 for v in grafo.identificar_articulacoes()]
+                    print("Articulações:", articulacoes)
                 elif escolha == 10:
-                    nome = input("Digite o nome base dos arquivos (sem extensão): ")
+                    nome = input("Digite o nome base dos arquivos (sem extensão): ").strip()
+                    if not nome:
+                        nome = grafo.nome.replace(" ", "_")  # Substituir espaços por underscores
                     grafo.exportar_para_gexf(f"{nome}.gexf")
                     grafo.exportar_para_ppm(f"{nome}.ppm")
+                    grafo.exportar_para_txt(f"{nome}.txt")
                     print("Exportação concluída.")
                 elif escolha == 11:
-                    nome_ppm = input("Digite o nome do arquivo PPM (com extensão .ppm): ")
+                    nome_ppm = input("Digite o nome do arquivo PPM (com extensão .ppm): ").strip()
+                    if not nome_ppm.endswith('.ppm'):
+                        print("Erro: O nome do arquivo deve terminar com '.ppm'.")
+                        continue
                     grafo.exportar_para_ppm(nome_ppm)
                 elif escolha == 12:
+                    # Ao sair do menu de criação manual, salvar automaticamente
+                    export_nome = grafo.nome.replace(" ", "_")  # Substituir espaços por underscores
+                    grafo.exportar_para_gexf(f"{export_nome}.gexf")
+                    grafo.exportar_para_ppm(f"{export_nome}.ppm")
+                    grafo.exportar_para_txt(f"{export_nome}.txt")
+                    print(f"Grafo '{grafo.nome}' exportado automaticamente após a criação.")
                     break
                 else:
                     print("Opção inválida, tente novamente.")
         elif opcao == 3:
             teste_desempenho()
         elif opcao == 4:
+            print("Saindo do programa. Até logo!")
             break
         else:
             print("Opção inválida, tente novamente.")
