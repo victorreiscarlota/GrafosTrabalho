@@ -15,6 +15,7 @@ setup(
         'gustavo.oliveira.1403216@sga.pucminas.br',
         'luisfelipebrescia@gmail.com',
         'lfcamposdemorais@gmail.com,',
+        'marcus.oliveira.1320200@sga.pucminas.br',
         'victor.reis.carlotta@gmail.com',
     ],
     packages=find_packages(),
