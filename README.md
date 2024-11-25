@@ -2,11 +2,11 @@
 
 `24/11/2024`
 
-## 👨‍🏫 Professor:
+## 👨‍🏫 Professor
 
 - Leonardo Vilela Cardoso
 
-## 🧑‍🎓 Integrantes:
+## 🧑‍🎓 Integrantes
 
 - Gustavo Pereira de Oliveira
 - Luís Felipe Teixeira Dias Brescia
@@ -23,4 +23,19 @@
 
 ## 📽️ Demonstração
 
-![DESC](dados/animacao.gif)
+![DESC](code/dados/animacao.gif)
+
+## ⌨️ Uso
+
+- Navegue até o diretório "code"
+- Dentro do direório
+
+```bash
+python main.py
+```
+
+- Para poder importar a nossa biblioteca
+
+```bash
+pip install -e GraphsKit/
+```
