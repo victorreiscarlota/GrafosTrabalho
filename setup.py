@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='HaraHetta',
+    name='GraphsKit',
     version='1.0.0',
     description='Uma biblioteca para manipulação de Grafos feita em python, aproveitem para contribuir!',
     author=[
