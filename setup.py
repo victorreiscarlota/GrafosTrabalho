@@ -4,8 +4,19 @@ setup(
     name='HaraHetta',
     version='1.0.0',
     description='Uma biblioteca para manipulação de Grafos feita em python, aproveitem para contribuir!',
-    author='Victor Reis Carlota',
-    author_email='victor.reis.carlotta@gmail.com',
+    author=[
+        'Gustavo Pereira de Oliveira',
+        'Luís Felipe Teixeira Dias Brescia',
+        'Luiz Fernando Campos de Morais',
+        'Marcus Vinícius de Oliveira',
+        'Victor Reis Carlota',
+    ],
+    author_email=[
+        'gustavo.oliveira.1403216@sga.pucminas.br',
+        'luisfelipebrescia@gmail.com',
+        'lfcamposdemorais@gmail.com,',
+        'victor.reis.carlotta@gmail.com',
+    ],
     packages=find_packages(),
     install_requires=[],
     classifiers=[
