@@ -1,5 +1,3 @@
-# main.py
-
 from grafo import Grafo
 from tests.teste_desempenho import teste_desempenho
 
@@ -33,13 +31,6 @@ def menu():
             'arestas': [(0, 1), (1, 2), (2, 3), (3, 0), (3, 4), (4, 5), (5, 3)],
             'dirigido': True
         },
-        "8": {
-            'arestas': [
-                (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8),
-                (8, 9), (9, 10), (10, 11), (11, 12), (12, 13), (13, 14), (14, 15), (15, 0)
-            ],
-            'dirigido': True
-        },
     }
     while True:
         print("\nEscolha as opções abaixo:")
@@ -59,9 +50,8 @@ def menu():
                 num_vertices = max(max(u, v) for u, v in arestas) + 1
                 grafo_nome = f"Grafo_{nome}"
                 grafo = Grafo(num_vertices, dirigido, nome=grafo_nome)
-                for idx, (u, v) in enumerate(arestas):
-                    label = chr(97 + idx)  # Rótulos 'a', 'b', 'c', ...
-                    grafo.adicionar_aresta(u, v, peso=1, label=label)
+                for u, v in arestas:
+                    grafo.adicionar_aresta(u, v)
                 print(f"\n{grafo.nome}:")
                 print(f"O grafo é {'direcionado' if grafo.dirigido else 'não direcionado'}.")
                 print(f"Vértices: {grafo.num_vertices}")
@@ -78,9 +68,9 @@ def menu():
                     print("Semi-fortemente Conexo:", grafo.grafo_semi_fortemente_conexo())
                 else:
                     print("Conexo:", grafo.grafo_conexo())
-                grafo.exportar_para_gexf(f"dados/{grafo.nome}.gexf")
-                grafo.exportar_para_ppm(f"dados/{grafo.nome}.ppm")
-                grafo.exportar_para_txt(f"dados/{grafo.nome}.txt")
+                grafo.exportar_para_gexf(f"{grafo.nome}.gexf")
+                grafo.exportar_para_ppm(f"{grafo.nome}.ppm")
+                grafo.exportar_para_txt(f"{grafo.nome}.txt")
                 print(f"Grafo '{grafo.nome}' exportado para os formatos GEXF, PPM e TXT no diretório 'dados'.")
         elif opcao == 2:
             try:
@@ -123,9 +113,9 @@ def menu():
                             continue
                         peso_input = input("Digite o peso da aresta (padrão 1): ")
                         peso = int(peso_input) if peso_input else 1
-                        label = input("Digite o rótulo da aresta (opcional): ") or None
+                        label = input("Digite o rótulo da aresta (opcional): ")
                         grafo.adicionar_aresta(u, v, peso, label)
-                        print(f"Aresta ({u + 1}, {v + 1}) adicionada com sucesso!")
+                        print(f"Aresta ({u + 1}, {v + 1}) adicionada!")
                     except ValueError:
                         print("Entrada inválida. Por favor, digite números inteiros.")
                 elif escolha == 2:
@@ -136,7 +126,7 @@ def menu():
                             print(f"Erro: Vértices válidos estão entre 1 e {grafo.num_vertices}.")
                             continue
                         grafo.remover_aresta(u, v)
-                        print(f"Aresta ({u + 1}, {v + 1}) removida com sucesso!")
+                        print(f"Aresta ({u + 1}, {v + 1}) removida!")
                     except ValueError:
                         print("Entrada inválida. Por favor, digite números inteiros.")
                 elif escolha == 3:
@@ -179,9 +169,9 @@ def menu():
                     nome = input("Digite o nome base dos arquivos (sem extensão): ").strip()
                     if not nome:
                         nome = grafo.nome.replace(" ", "_")
-                    grafo.exportar_para_gexf(f"dados/{nome}.gexf")
-                    grafo.exportar_para_ppm(f"dados/{nome}.ppm")
-                    grafo.exportar_para_txt(f"dados/{nome}.txt")
+                    grafo.exportar_para_gexf(f"{nome}.gexf")
+                    grafo.exportar_para_ppm(f"{nome}.ppm")
+                    grafo.exportar_para_txt(f"{nome}.txt")
                     print("Exportação concluída.")
                 elif escolha == 11:
                     nome_ppm = input("Digite o nome do arquivo PPM (com extensão .ppm): ").strip()
@@ -189,12 +179,11 @@ def menu():
                         print("Erro: O nome do arquivo deve terminar com '.ppm'.")
                         continue
                     grafo.exportar_para_ppm(nome_ppm)
-                    print(f"Arquivo PPM '{nome_ppm}' exportado com sucesso.")
                 elif escolha == 12:
-                    nome = grafo.nome.replace(" ", "_")
-                    grafo.exportar_para_gexf(f"{nome}.gexf")
-                    grafo.exportar_para_ppm(f"{nome}.ppm")
-                    grafo.exportar_para_txt(f"{nome}.txt")
+                    export_nome = grafo.nome.replace(" ", "_")
+                    grafo.exportar_para_gexf(f"{export_nome}.gexf")
+                    grafo.exportar_para_ppm(f"{export_nome}.ppm")
+                    grafo.exportar_para_txt(f"{export_nome}.txt")
                     print(f"Grafo '{grafo.nome}' exportado automaticamente após a criação.")
                     break
                 else:
