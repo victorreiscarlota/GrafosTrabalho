@@ -28,7 +28,7 @@
 ## ⌨️ Uso
 
 - Navegue até o diretório "code"
-- Dentro do direório
+- Dentro do diretório
 
 ```bash
 python main.py
