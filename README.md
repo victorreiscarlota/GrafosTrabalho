@@ -23,7 +23,7 @@
 
 ## 📽️ Demonstração
 
-![DESC](code/dados/animacao.gif)
+![DESC](docs/grafo.gif)
 
 ## ⌨️ Uso
 
