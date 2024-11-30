@@ -28,14 +28,11 @@ class Grafo:
         self.matriz_inc.num_vertices += 1
         self.num_vertices += 1
         self.lista_adj.adjacencias[v] = []
-        
         for row in self.matriz_adj.adj_matrix:
             row.append(0)
         self.matriz_adj.adj_matrix.append([0] * self.matriz_adj.num_vertices)
-        
         for row in self.matriz_inc.inc_matrix:
             row.append(0)
-        
         self.vertex_labels[v] = label if label else f"V{v + 1}"
 
     def adicionar_aresta(self, u, v, peso=1, label=None):
@@ -48,7 +45,6 @@ class Grafo:
         self.lista_adj.remover_aresta(u, v)
         self.matriz_adj.remover_aresta(u, v)
         self.matriz_inc.remover_aresta(u, v)
-        
         for i, edge in enumerate(self.edge_list):
             if edge['u'] == u and edge['v'] == v:
                 del self.edge_list[i]
@@ -84,12 +80,17 @@ class Grafo:
     def identificar_pontes_naive(self):
         pontes = []
         for u in range(self.num_vertices):
-            for v, _ in list(self.lista_adj.adjacencias[u]):
+            adjacentes = list(self.lista_adj.adjacencias[u])
+            for v, peso in adjacentes:
                 if (u < v) or self.dirigido:
-                    self.remover_aresta(u, v)
+                    self.lista_adj.adjacencias[u] = [w for w in self.lista_adj.adjacencias[u] if w[0] != v]
+                    if not self.dirigido:
+                        self.lista_adj.adjacencias[v] = [w for w in self.lista_adj.adjacencias[v] if w[0] != u]
                     if not self.grafo_conexo():
                         pontes.append((u, v))
-                    self.adicionar_aresta(u, v)
+                    self.lista_adj.adjacencias[u].append((v, peso))
+                    if not self.dirigido:
+                        self.lista_adj.adjacencias[v].append((u, peso))
         return pontes
 
     def identificar_pontes_tarjan(self):
@@ -99,7 +100,6 @@ class Grafo:
         pontes = []
         visited = [False] * self.num_vertices
         parent = [-1] * self.num_vertices
-
         for u in range(self.num_vertices):
             if not visited[u]:
                 self._tarjan_dfs(u, visited, parent, num, low, pontes)
@@ -110,7 +110,6 @@ class Grafo:
         visited[u] = True
         num[u] = low[u] = self.tempo
         self.tempo += 1
-
         while stack:
             v, children = stack[-1]
             try:
@@ -137,7 +136,6 @@ class Grafo:
         self.tempo = 1
         articulacoes = set()
         visited = [False] * self.num_vertices
-
         for u in range(self.num_vertices):
             if not visited[u]:
                 self._articulacao_dfs(u, visited, parent, num, low, articulacoes)
@@ -149,8 +147,6 @@ class Grafo:
         visited[u] = True
         num[u] = low[u] = self.tempo
         self.tempo += 1
-        articulation_found = False
-
         while stack:
             v, children_iter, is_return = stack[-1]
             if not is_return:
@@ -195,40 +191,33 @@ class Grafo:
     def kosaraju_scc(self):
         visited = [False] * self.num_vertices
         stack = []
-
         def dfs_fill_order(v):
             visited[v] = True
             for w, _ in self.lista_adj.adjacencias[v]:
                 if not visited[w]:
                     dfs_fill_order(w)
             stack.append(v)
-
         for i in range(self.num_vertices):
             if not visited[i]:
                 dfs_fill_order(i)
-
         transposto = {i: [] for i in range(self.num_vertices)}
         for u in self.lista_adj.adjacencias:
             for v, peso in self.lista_adj.adjacencias[u]:
                 transposto[v].append((u, peso))
-
         visited = [False] * self.num_vertices
         scc_list = []
-
         def dfs_transpose(v, component):
             visited[v] = True
             component.append(v)
             for w, _ in transposto[v]:
                 if not visited[w]:
                     dfs_transpose(w, component)
-
         while stack:
             v = stack.pop()
             if not visited[v]:
                 component = []
                 dfs_transpose(v, component)
                 scc_list.append(component)
-
         return scc_list
 
     def grafo_fortemente_conexo(self):
@@ -286,7 +275,6 @@ class Grafo:
         grafo_copia.matriz_inc.inc_matrix = [row.copy() for row in self.matriz_inc.inc_matrix]
         grafo_copia.edge_list = list(self.edge_list)
         grafo_copia.vertex_labels = dict(self.vertex_labels)
-
         caminho = []
         atual = 0
         while grafo_copia.contar_vertices_arestas()[1] > 0:
